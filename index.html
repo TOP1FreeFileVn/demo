@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sword & Squad - RPG</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="game-container">
+    
+    <div id="hub-screen">
+        <div class="hub-header">
+            <div class="hub-stat">⭐ Lv.1</div>
+            <div class="hub-stat">⚡ 20/20</div>
+            <div class="hub-stat" style="color:#ff9800">🪙 0</div>
+            <div class="hub-stat" style="color:#e91e63">💎 0</div>
+        </div>
+        
+        <div class="hub-center">
+            <div class="game-title">Sword & Squad</div>
+            <div class="formation-wrapper">
+                <div class="form-supp pos-1">🥷</div>
+                <div class="form-supp pos-2">🪓</div>
+                <div class="form-supp pos-3" style="animation: breatheCenter 3s infinite;">🛡️</div>
+                <div class="form-main">🗡️</div>
+            </div>
+            <button id="play-btn" onclick="startBattle()">CHIẾN ĐẤU</button>
+        </div>
+        
+        <div class="hub-bottom-nav">
+            <div class="nav-item">🛒<span>Cửa hàng</span></div>
+            <div class="nav-item" onclick="openTeamModal()">👥<span>Đội hình</span></div>
+            <div class="nav-item active">⚔️<span>Chiến đấu</span></div>
+            <div class="nav-item">🧬<span>Thiên phú</span></div>
+            <div class="nav-item" onclick="openSettings()">⚙️<span>Cài đặt</span></div>
+        </div>
+    </div>
+
+    <div id="battle-screen">
+        <div class="header">
+            <div>
+                <div class="bar-label">LV. <span id="lv-val">1</span></div>
+                <div class="bar-container"><div id="exp-bar" class="bar-fill exp-fill"></div></div>
+            </div>
+            
+            <div class="top-right-controls">
+                <div class="stage-and-settings">
+                    <div class="bar-label" style="color: var(--primary);">STAGE <span id="stage-top-val">1</span></div>
+                    <button class="icon-btn" onclick="openSettings()">⚙️</button>
+                </div>
+                <div class="controls-row">
+                    <button id="speed-btn" class="btn-toggle" onclick="toggleSpeed()">⏩ x1</button>
+                    <button id="auto-btn" class="btn-toggle" onclick="toggleAuto()">🤖 AUTO</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="stage-progress-map">
+            <div class="stage-line"></div>
+            <div id="stage-dots-container"></div>
+        </div>
+
+        <div id="battle-area">
+            <div id="stage-clear-banner">STAGE CLEAR!</div>
+            
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div class="battle-team-wrapper" id="player-sprite">
+                    <div id="battle-supports-container"></div>
+                    <div class="battle-form-main" id="battle-main-icon">🗡️</div>
+                </div>
+                <div class="entity-info">
+                    <div class="entity-name" style="color:var(--primary)">Tổ Đội (Team)</div>
+                    <div class="hp-text"><span id="player-hp-val">100</span> / <span id="player-maxhp-val">100</span></div>
+                    <div class="mini-hp-container"><div id="player-mini-hp" class="mini-hp-fill"></div></div>
+                </div>
+            </div>
+
+            <div class="entity" id="monster-sprite">
+                <div class="monster" id="monster-icon">👾</div>
+                <div class="entity-info">
+                    <div class="entity-name" style="color:#d32f2f" id="enemy-name">Quái vật</div>
+                    <div class="atk-text">ATK: <span id="monster-atk-val">8</span></div>
+                    <div class="hp-text"><span id="monster-hp-val">30</span> / <span id="monster-maxhp-val">30</span></div>
+                    <div class="mini-hp-container"><div id="monster-mini-hp" class="mini-hp-fill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="skills-panel"></div>
+
+        <div id="action-bar-container">
+            <div class="action-label">Chuỗi hành động của Vũ Khí Chính</div>
+            <div id="action-bar"></div>
+        </div>
+
+        <div id="log">Tổ đội đã sẵn sàng!</div>
+    </div>
+
+    <div id="team-modal" class="modal-overlay" style="z-index: 200;">
+        <div class="settings-box">
+            <div class="modal-title" style="margin-bottom: 5px;">THIẾT LẬP ĐỘI HÌNH</div>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Vũ khí chính đi đầu. Nhấn vào các ô Kỹ năng bên dưới màn hình chiến đấu để tung chiêu.</p>
+            <div class="team-roster" id="team-roster-display"></div>
+            <div class="settings-actions">
+                <button class="btn-close" onclick="closeTeamModal()">Xong</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="level-modal" class="modal-overlay">
+        <div class="modal-title" id="modal-title-text">🌟 LEVEL UP! 🌟</div>
+        <div class="choices-container" id="choices"></div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay" style="z-index: 200;">
+        <div class="settings-box">
+            <div class="modal-title">CÀI ĐẶT</div>
+            <div class="settings-actions">
+                <button class="btn-close" onclick="closeSettings()">Đóng</button>
+                <button class="btn-exit" onclick="confirmExit()">Thoát Game</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
