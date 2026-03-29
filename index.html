@@ -99,12 +99,23 @@
     </div>
 
     <div id="team-modal" class="modal-overlay" style="z-index: 200;">
-        <div class="settings-box">
-            <div class="modal-title" style="margin-bottom: 5px;">THIẾT LẬP ĐỘI HÌNH</div>
-            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Vũ khí chính đi đầu. Nhấn vào các ô Kỹ năng bên dưới màn hình chiến đấu để tung chiêu.</p>
-            <div class="team-roster" id="team-roster-display"></div>
-            <div class="settings-actions">
-                <button class="btn-close" onclick="closeTeamModal()">Xong</button>
+        <div class="settings-box" style="width: 95%;">
+            <div class="modal-title" style="margin-bottom: 5px;">SẮP XẾP ĐỘI HÌNH</div>
+            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Kéo thả Tướng vào 3 vị trí. Vũ khí (Main) luôn cố định.</p>
+            
+            <div class="formation-builder">
+                <div class="drop-zone" data-slot="0" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div>
+                <div class="main-hero-fixed">🗡️<br><span>MAIN</span></div>
+                <div class="drop-zone" data-slot="1" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div>
+                <div class="drop-zone" data-slot="2" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div>
+            </div>
+
+            <div style="font-weight: bold; font-size: 12px; margin-bottom: 5px; color: var(--primary);">DANH SÁCH SUPPORT:</div>
+            <div class="bench-container" id="bench-container" ondrop="dropToBench(event)" ondragover="allowDrop(event)">
+                </div>
+
+            <div class="settings-actions" style="margin-top: 20px;">
+                <button class="btn-close" onclick="closeTeamModal()">Xác Nhận</button>
             </div>
         </div>
     </div>
