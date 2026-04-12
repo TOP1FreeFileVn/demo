@@ -86,8 +86,63 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
 .popup-skill { color: var(--accent); font-size: 16px; white-space: nowrap; left: 20px; z-index: 30; text-shadow: 1px 1px 2px #000;}
 @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-20px) scale(1.2); } 100% { opacity: 0; transform: translateY(-70px) scale(1); } }
 
-#stage-clear-banner { position: absolute; top: 40%; left: 0; width: 100%; background: rgba(139, 90, 43, 0.9); color: white; text-align: center; padding: 15px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; transform: scaleY(0); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 50; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-#stage-clear-banner.show { transform: scaleY(1); }
+/* --- CẬP NHẬT CSS CHO STAGE CLEAR (Swipe Effect) --- */
+        #stage-clear-banner { 
+            position: absolute; 
+            top: 50%; /* Đưa về giữa màn hình dọc */
+            left: 50%; /* Đưa về giữa màn hình ngang */
+            transform: translate(-50%, -50%); /* Căn chỉnh tâm hoàn hảo */
+            width: 90%; /* Chiều rộng banner */
+            
+            /* Màu nền Gradient đỏ đen đậm chất gaming */
+            background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(139, 0, 0, 1) 15%, rgba(139, 0, 0, 1) 85%, rgba(0,0,0,0) 100%);
+            color: white; 
+            text-align: center; 
+            padding: 15px 0; 
+            font-size: 28px; /* Chữ to hơn */
+            font-weight: 900; /* Chữ đậm hơn */
+            letter-spacing: 4px; /* Giãn chữ rộng hơn */
+            text-transform: uppercase; 
+            z-index: 100; 
+            
+            /* Đổ bóng viền chữ để nổi bật */
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 8px rgba(0,0,0,0.5);
+            
+            /* Trạng thái mặc định: Ẩn hoàn toàn */
+            display: none; 
+            opacity: 0;
+        }
+
+        /* Khi class .show được thêm vào bởi JS */
+        #stage-clear-banner.show { 
+            display: block;
+            /* Gọi animation swipeRight: chạy trong 1.5 giây, theo đường cong bezier, giữ lại trạng thái cuối */
+            animation: swipeRight 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        /* ĐỊNH NGHĨA ANIMATION LƯỚT QUA PHẢI */
+        @keyframes swipeRight {
+            0% {
+                opacity: 0;
+                transform: translate(-100%, -50%) scaleX(1.5); /* Bắt đầu từ ngoài bên trái, bị kéo dài */
+                clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); /* Chỉ hiển thị 1 đường vạch đứng ở cạnh trái */
+            }
+            15% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scaleX(1); /* Bay vào giữa, kích thước chuẩn */
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); /* Hiển thị đầy đủ chữ */
+            }
+            85% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scaleX(1); /* Giữ nguyên vị trí ở giữa để người chơi đọc */
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(50%, -50%) scaleX(1.5); /* Bay ra ngoài bên phải, bị kéo dài lần nữa */
+                clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); /* Thu nhỏ về 1 đường vạch đứng ở cạnh phải */
+            }
+        }
 
 /* UI NÚT SKILL RIÊNG */
 #skills-panel { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #3e2723; border-top: 2px solid #2c1e16; }
