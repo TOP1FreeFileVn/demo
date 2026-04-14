@@ -49,13 +49,16 @@ const BASE_PLAYER_HP = 120;
 
 const player = { 
     hp: 120, maxHp: 120, lv: 1, exp: 0, nextExp: 40, gold: 50, boardPos: 0, lap: 1, shrineBuff: 0, 
-    shrines: new Array(32).fill(0), // Layer Đền Thờ bên ngoài Bàn cờ
+    shrines: new Array(32).fill(0),
+    inventory: { diceLow: 0, diceHigh: 0 },
     sequence: [{id: 'attack', level: 1}], 
     statuses: { poison: 0, stun: 0, slow: 0, weaken: 0 } 
 };
 
 const SHOP_DATABASE = [
     { id: 'heal', icon: '🥟', name: 'Bánh Bao Tiên', desc: 'Hồi 40% HP', price: 20, type: 'consumable' },
+    { id: 'diceLow', icon: '🐢', name: 'Xúc Xắc Chậm', desc: 'Chỉ đổ ra 1-3', price: 30, type: 'item' },
+    { id: 'diceHigh', icon: '🐇', name: 'Xúc Xắc Nhanh', desc: 'Chỉ đổ ra 4-6', price: 30, type: 'item' },
     { id: 'skill', icon: '🃏', name: 'Thẻ Kỹ Năng', desc: 'Nhận 1 Thẻ ngẫu nhiên', price: 60, type: 'card' }
 ];
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hero Vanguard: RPG x Monopoly</title>
+    <title>Hero Vanguard: 2.5D Edition</title>
     <style>
         :root { --bg-color: #fdf6e3; --primary: #8b5a2b; --accent: #ffcc00; --hp-color: #ff4d4d; --exp-color: #4da3ff; --text-dark: #3e2723; --cd-color: #00e676; }
         * { box-sizing: border-box; }
@@ -35,7 +35,7 @@
 
         /* --- BATTLE SCREEN TOP BAR --- */
         #battle-screen { display: none; flex-direction: column; height: 100%; width: 100%; }
-        .header { padding: 15px 15px 5px; background: rgba(255,255,255,0.7); display: flex; justify-content: space-between; align-items: flex-start; z-index: 20; }
+        .header { padding: 15px 15px 5px; background: rgba(255,255,255,0.7); display: flex; justify-content: space-between; align-items: flex-start; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .bar-label { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase;}
         .bar-container { width: 120px; height: 12px; background: #ddd; border-radius: 10px; overflow: hidden; border: 1px solid #bbb; }
         .bar-fill { height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -49,38 +49,96 @@
         .btn-toggle.active-state { background: var(--accent); color: var(--text-dark); }
         .controls-row { display: flex; gap: 5px; }
 
-        /* --- MONOPOLY BOARD --- */
-        /* Đã xóa overflow: hidden để đền thờ có thể thò ra ngoài */
-        #monopoly-board-wrapper { position: relative; width: 330px; height: 330px; margin: 25px auto; display: flex; justify-content: center; align-items: center; border-radius: 10px; }
-        #stage-dots-container { display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); width: 100%; height: 100%; position: absolute; top: 0; left: 0; gap: 2px; padding: 2px; background: rgba(0,0,0,0.03); border-radius: 5px;}
-        .stage-dot { background: #fff; border: 2px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 18px; transition: 0.3s; }
-        .stage-dot.completed { background: #e0e0e0; filter: grayscale(0.5); }
-        .stage-dot.active { border-color: var(--primary); box-shadow: 0 0 10px var(--accent); background: #fff8e1; transform: scale(1.15); z-index: 5; }
-        .stage-dot.active::after { content: '📍'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 22px; animation: bounce 0.5s infinite alternate; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); z-index: 10; }
-        .corner-tile { background: #ffe082; border-color: #ff8f00; font-size: 22px; }
+        /* ========================================================= */
+        /* --- CAMERA VIEWPORT & BÀN CỜ 2.5D KHỔNG LỒ -------------- */
+        /* ========================================================= */
+
+        #board-viewport { 
+            flex-grow: 1; 
+            width: 100%; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; 
+            perspective: 1200px; 
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.05) 100%);
+        }
+
+        #monopoly-board-wrapper { 
+            position: absolute; 
+            width: 700px; 
+            height: 700px; 
+            transform-style: preserve-3d; 
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+
+        #stage-dots-container { 
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
+            display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); 
+            gap: 4px; padding: 4px; background: rgba(139, 90, 43, 0.1); border-radius: 15px;
+            box-shadow: 0 20px 0 #d7ccc8, 0 40px 30px rgba(0,0,0,0.3); border: 4px solid #bcaaa4;
+            transform-style: preserve-3d;
+        }
         
-        /* CSS cho Slot Đền Thờ nằm ngoài Bàn cờ */
-        .shrine-slot { position: absolute; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 16px; background: rgba(0,0,0,0.03); border: 1px dashed #bbb; border-radius: 3px; }
-        .shrine-top { top: -26px; left: 50%; transform: translateX(-50%); }
-        .shrine-right { right: -26px; top: 50%; transform: translateY(-50%); }
-        .shrine-bottom { bottom: -26px; left: 50%; transform: translateX(-50%); }
-        .shrine-left { left: -26px; top: 50%; transform: translateY(-50%); }
+        .stage-dot { 
+            background: #fff; border: 3px solid #ccc; border-radius: 6px; display: flex; justify-content: center; align-items: center; position: relative; 
+            box-shadow: inset 0 -6px 0 rgba(0,0,0,0.1); font-size: 32px; transition: 0.3s; 
+            transform-style: preserve-3d;
+        }
+        .stage-dot.completed { background: #e0e0e0; filter: grayscale(0.5); }
+        
+        .stage-dot.active { border-color: var(--hp-color); box-shadow: 0 0 25px rgba(255, 77, 77, 0.6); background: #fff1f1; transform: scale(1.1); z-index: 15; transition: all 0.15s ease-out; }
+        .stage-dot.active::after { 
+            content: '♟️'; 
+            position: absolute; bottom: -5px; left: 50%; 
+            font-size: 60px; 
+            transform-origin: bottom center; 
+            animation: pieceJump 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) alternate infinite; 
+            text-shadow: 0 15px 10px rgba(0,0,0,0.6); z-index: 20; filter: drop-shadow(0 0 2px #fff);
+        }
+        
+        @keyframes pieceJump { 
+            from { transform: translateX(-50%) rotateX(-50deg) scaleY(0.9); } 
+            to { transform: translateX(-50%) rotateX(-50deg) translateY(-25px) scaleY(1.05); text-shadow: 0 35px 15px rgba(0,0,0,0.4); } 
+        }
 
-        @keyframes bounce { from { transform: translate(-50%, 0); } to { transform: translate(-50%, -6px); } }
+        .stage-dot.active.final-step::after { animation: finalHeavyJump 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes finalHeavyJump {
+            0% { transform: translateX(-50%) rotateX(-50deg) scaleY(0.8); }
+            40% { transform: translateX(-50%) rotateX(-50deg) translateY(-90px) scaleY(1.1); text-shadow: 0 80px 20px rgba(0,0,0,0.2); }
+            100% { transform: translateX(-50%) rotateX(-50deg) translateY(0) scaleY(0.95); text-shadow: 0 0 15px #ff4d4d; }
+        }
 
-        #center-map-boss { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; z-index: 5; }
-        .map-boss-icon { font-size: 60px; filter: drop-shadow(0 10px 10px rgba(211, 47, 47, 0.5)); animation: breathe 3s infinite; transition: 0.3s; }
-        .map-boss-label { font-weight: 900; color: #d32f2f; font-size: 14px; text-shadow: 1px 1px 0 #fff; margin-top: -5px; letter-spacing: 1px; text-align: center; }
+        .corner-tile { background: #ffe082; border-color: #ff8f00; font-size: 38px; }
+        
+        /* --- ĐỀN THỜ MỌC RÌA NGOÀI --- */
+        .shrine-slot { 
+            position: absolute; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 35px; 
+            background: #fff8e1; border: 3px solid #8b5a2b; border-radius: 8px; box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transform-style: preserve-3d;
+        }
+        .shrine-top { top: -60px; left: 50%; transform: translateX(-50%) rotateX(-50deg); transform-origin: bottom center; }
+        .shrine-right { right: -60px; top: 50%; transform: translateY(-50%) rotateX(-50deg); transform-origin: bottom center; }
+        .shrine-bottom { bottom: -60px; left: 50%; transform: translateX(-50%) rotateX(-50deg); transform-origin: bottom center; }
+        .shrine-left { left: -60px; top: 50%; transform: translateY(-50%) rotateX(-50deg); transform-origin: bottom center; }
 
-        /* --- XÚC XẮC CƠ BẢN --- */
-        #dice-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%); z-index: 60; background: rgba(255,255,255,0.95); padding: 10px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); border: 2px solid var(--accent); }
+        #center-map-boss { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotateX(-50deg); transform-origin: bottom center; display: flex; flex-direction: column; align-items: center; z-index: 5; }
+        .map-boss-icon { font-size: 120px; filter: drop-shadow(0 15px 15px rgba(211, 47, 47, 0.5)); animation: breathe 3s infinite; transition: 0.3s; }
+        .map-boss-label { font-weight: 900; color: #d32f2f; font-size: 22px; text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff; margin-top: -15px; letter-spacing: 2px; text-align: center; }
+
+        /* --- XÚC XẮC THÔNG MINH --- */
+        #dice-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60; background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); border: 2px solid var(--accent); width: 220px; }
         .dice-pair { display: flex; gap: 15px; margin-bottom: 10px; }
         .dice-ui { font-size: 45px; animation: breathe 1s infinite; text-shadow: 2px 4px 6px rgba(0,0,0,0.2); }
-        #btn-roll { padding: 10px 20px; font-size: 14px; font-weight: 900; background: var(--accent); color: var(--text-dark); border: 3px solid var(--primary); border-radius: 20px; cursor: pointer; box-shadow: 0 5px 0 var(--primary); transition: 0.1s; }
-        #btn-roll:active { transform: translateY(5px); box-shadow: 0 0 0 var(--primary); }
+        .btn-roll-group { display: flex; gap: 5px; width: 100%; justify-content: center;}
+        .btn-roll-main { flex: 2; padding: 10px 0; font-size: 13px; font-weight: 900; background: var(--accent); color: var(--text-dark); border: 3px solid var(--primary); border-radius: 15px; cursor: pointer; box-shadow: 0 5px 0 var(--primary); transition: 0.1s; }
+        .btn-roll-main:active { transform: translateY(5px); box-shadow: 0 0 0 var(--primary); }
+        .btn-roll-cheat { flex: 1; padding: 8px 0; font-size: 11px; font-weight: bold; background: #e0e0e0; color: #555; border: 2px solid #999; border-radius: 10px; cursor: pointer; position: relative; }
+        .btn-roll-cheat.active { background: #4da3ff; color: white; border-color: #0056b3; cursor: pointer; box-shadow: 0 3px 0 #0056b3; }
+        .btn-roll-cheat.active:active { transform: translateY(3px); box-shadow: 0 0 0 #0056b3; }
+        .cheat-badge { position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; justify-content: center; align-items: center; border: 1px solid white; display: none; }
 
         /* --- COMBAT VIEW --- */
-        #combat-view { position: absolute; width: 110%; height: 110%; top: -5%; left: -5%; background: var(--bg-color); z-index: 30; display: none; flex-direction: column; justify-content: space-evenly; align-items: center; border-radius: 10px; }
+        #combat-view { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: var(--bg-color); z-index: 80; display: none; flex-direction: column; justify-content: space-evenly; align-items: center; }
         #monster-sprite { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .monster { font-size: 80px; filter: drop-shadow(0 8px 8px rgba(0,0,0,0.3)); transition: transform 0.2s; animation: breathe 3s infinite; }
         #player-sprite-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
@@ -97,8 +155,8 @@
 
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-6px) rotate(-5deg); filter: brightness(2) drop-shadow(0 0 10px red); } 50% { transform: translateX(6px) rotate(5deg); } 75% { transform: translateX(-6px) rotate(-5deg); } 100% { transform: translateX(0); filter: brightness(1); } }
         .shake { animation: shake 0.3s ease-in-out; }
-        .popup-text { position: absolute; font-weight: 900; font-size: 20px; animation: floatUp 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; width: 100px; text-align: center; left: 50%; margin-left: -50px; text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff; z-index: 40; }
-        .popup-dmg { color: #d32f2f; } .popup-heal { color: #4caf50; } .popup-skill { color: var(--accent); font-size: 14px; white-space: nowrap; z-index: 50; text-shadow: 1px 1px 2px #000;}
+        .popup-text { position: absolute; font-weight: 900; font-size: 20px; animation: floatUp 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; width: 100px; text-align: center; left: 50%; margin-left: -50px; text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff; z-index: 90; }
+        .popup-dmg { color: #d32f2f; } .popup-heal { color: #4caf50; } .popup-skill { color: var(--accent); font-size: 14px; white-space: nowrap; z-index: 100; text-shadow: 1px 1px 2px #000;}
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-20px) scale(1.2); } 100% { opacity: 0; transform: translateY(-50px) scale(1); } }
 
         /* STAGE CLEAR BANNER */
@@ -207,11 +265,13 @@
             </div>
         </div>
 
-        <div id="monopoly-board-wrapper">
-            <div id="stage-dots-container"></div> 
-            <div id="center-map-boss">
-                <div class="map-boss-icon" id="map-boss-icon-ui">👑</div>
-                <div class="map-boss-label" id="map-boss-label-ui">TRÙM CUỐI</div>
+        <div id="board-viewport">
+            <div id="monopoly-board-wrapper">
+                <div id="stage-dots-container"></div> 
+                <div id="center-map-boss">
+                    <div class="map-boss-icon" id="map-boss-icon-ui">👑</div>
+                    <div class="map-boss-label" id="map-boss-label-ui">TRÙM CUỐI</div>
+                </div>
             </div>
             
             <div id="dice-container">
@@ -219,7 +279,11 @@
                     <div id="dice-result-1" class="dice-ui">🎲</div>
                     <div id="dice-result-2" class="dice-ui" style="animation-delay: 0.2s;">🎲</div>
                 </div>
-                <button id="btn-roll" onclick="rollDice()">ĐỔ XÚC XẮC</button>
+                <div class="btn-roll-group">
+                    <button class="btn-roll-cheat" id="btn-dice-low" onclick="rollDice('low')">CHẬM<div class="cheat-badge" id="badge-low">0</div></button>
+                    <button class="btn-roll-main" id="btn-roll" onclick="rollDice('normal')">ĐỔ XÚC XẮC</button>
+                    <button class="btn-roll-cheat" id="btn-dice-high" onclick="rollDice('high')">NHANH<div class="cheat-badge" id="badge-high">0</div></button>
+                </div>
             </div>
 
             <div id="combat-view">
@@ -256,8 +320,7 @@
         <div class="settings-box" style="width: 90%;">
             <div class="modal-title" style="color: #ff9800; margin-bottom:0;">🛒 THƯƠNG NHÂN 🛒</div>
             <div style="font-size: 12px; margin-bottom: 10px; color: #555;">Vàng hiện có: <b id="shop-gold-display" style="color:#ffcc00; font-size:14px;">0</b></div>
-            <div id="shop-items-container" style="display:flex; flex-direction:column; gap:10px;">
-                </div>
+            <div id="shop-items-container" style="display:flex; flex-direction:column; gap:10px;"></div>
             <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
                 <button class="btn-warning" onclick="refreshShop()">Làm Mới (10 🪙)</button>
                 <button class="btn-close" onclick="closeShop()">Rời Đi</button>

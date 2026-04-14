@@ -1,5 +1,44 @@
+window.cameraMode = 'full';
+window.currentCamScale = 0.6;
+window.currentCamShakeX = 0;
+window.currentCamShakeY = 0;
+
+function updateCamera() {
+    const boardSize = 700;
+    const tileSize = boardSize / 9;
+    let dx = 0, dy = 0;
+    let scale = window.cameraMode === 'full' ? 0.48 : window.currentCamScale;
+
+    if (window.cameraMode === 'focus') {
+        const pos = player.boardPos;
+        let row, col;
+        if (pos <= 8) { row = 1; col = pos + 1; }
+        else if (pos <= 16) { row = pos - 7; col = 9; }
+        else if (pos <= 24) { row = 9; col = 25 - pos; }
+        else { row = 33 - pos; col = 1; }
+        dx = (col - 0.5) * tileSize - (boardSize/2);
+        dy = (row - 0.5) * tileSize - (boardSize/2);
+    }
+
+    const boardWrapper = document.getElementById('monopoly-board-wrapper');
+    if (boardWrapper) {
+        boardWrapper.style.transform = `scale(${scale}) rotateX(50deg) translate(${-dx + window.currentCamShakeX}px, ${-dy + window.currentCamShakeY}px)`;
+    }
+}
+
 function toggleSpeed() { gameSpeed = gameSpeed === 1 ? 2 : 1; let btn = document.getElementById('speed-btn'); btn.innerText = `⏩ x${gameSpeed}`; if(gameSpeed === 2) btn.classList.add('active-state'); else btn.classList.remove('active-state'); }
-function toggleAuto() { isAutoSkill = !isAutoSkill; let btn = document.getElementById('auto-btn'); if(isAutoSkill) { btn.classList.add('active-state'); btn.innerText = '🤖 AUTO: BẬT'; } else { btn.classList.remove('active-state'); btn.innerText = '🤖 AUTO: TẮT'; } }
+function toggleAuto() { 
+    isAutoSkill = !isAutoSkill; 
+    let btn = document.getElementById('auto-btn'); 
+    if(isAutoSkill) { 
+        btn.classList.add('active-state'); 
+        btn.innerText = '🤖 AUTO: BẬT'; 
+        if (document.getElementById('dice-container').style.display === 'flex') { rollDice('normal'); }
+    } else { 
+        btn.classList.remove('active-state'); 
+        btn.innerText = '🤖 AUTO: TẮT'; 
+    } 
+}
 function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
 function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 function confirmExit() { if (confirm("Bạn muốn thoát?")) location.reload(); }
@@ -43,6 +82,11 @@ function updateUI() {
         }
     });
 
+    const btnLow = document.getElementById('btn-dice-low'); const badgeLow = document.getElementById('badge-low');
+    const btnHigh = document.getElementById('btn-dice-high'); const badgeHigh = document.getElementById('badge-high');
+    if(btnLow) { if(player.inventory.diceLow > 0) { btnLow.classList.add('active'); badgeLow.style.display = 'flex'; badgeLow.innerText = player.inventory.diceLow; } else { btnLow.classList.remove('active'); badgeLow.style.display = 'none'; } }
+    if(btnHigh) { if(player.inventory.diceHigh > 0) { btnHigh.classList.add('active'); badgeHigh.style.display = 'flex'; badgeHigh.innerText = player.inventory.diceHigh; } else { btnHigh.classList.remove('active'); badgeHigh.style.display = 'none'; } }
+
     renderStatusIcons('player-sprite-container', player.statuses); renderStatusIcons('monster-sprite', monster.statuses);
 }
 
@@ -71,7 +115,6 @@ function renderStageMap() {
         if (index < player.boardPos && player.lap === 1) dot.classList.add('completed');
         if (index === player.boardPos) dot.classList.add('active');
         
-        // Vẽ Đền Thờ bên ngoài (Chỉ vẽ nếu có cấp độ > 0 và không phải góc)
         let sLevel = player.shrines[index];
         let sIcon = sLevel === 0 ? '' : (sLevel === 1 ? '⛩️' : (sLevel === 2 ? '🏯' : '🕍'));
         let shrineHtml = (!tile.isCorner && sLevel > 0) ? `<div class="shrine-slot ${posClass}">${sIcon}</div>` : '';
@@ -81,6 +124,8 @@ function renderStageMap() {
     });
     document.getElementById('stage-top-val').innerText = `VÒNG ${player.lap}`;
     if(document.getElementById('map-boss-label-ui')) document.getElementById('map-boss-label-ui').innerText = bossEnrage > 0 ? `TRÙM CUỐI (Nộ: ${bossEnrage})` : 'TRÙM CUỐI';
+    
+    updateCamera();
 }
 
 function renderActionBar() {
@@ -102,10 +147,29 @@ function renderActionBar() {
 
 function addLog(msg) { const log = document.getElementById('log'); if(log) { log.innerHTML += `<div>> ${msg}</div>`; log.scrollTop = log.scrollHeight; } }
 function triggerShake(elementId) { const el = document.getElementById(elementId); if(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
+
 function spawnPopup(targetId, val, type, skillName = null) {
-    const target = document.getElementById(targetId); if(!target) return;
+    let target = document.getElementById(targetId); 
+    if (targetId === 'player-sprite-container' && document.getElementById('combat-view').style.display === 'none') {
+        target = document.querySelector('.stage-dot.active');
+    }
+    if(!target) return;
+
     const popup = document.createElement('div');
-    if (skillName) { popup.className = 'popup-text popup-skill'; popup.innerText = skillName; } else { popup.className = `popup-text popup-${type}`; popup.innerText = type === 'dmg' ? `-${val}` : `+${val}`; }
+    const offsetX = (Math.random() - 0.5) * 50; 
+    const offsetY = (Math.random() - 0.5) * 30;
+
+    if (skillName) { 
+        popup.className = 'popup-text popup-skill'; popup.innerText = skillName; 
+    } else { 
+        popup.className = `popup-text popup-${type}`; popup.innerText = type === 'dmg' ? `-${val}` : `+${val}`; 
+    }
+    
+    popup.style.left = `calc(50% + ${offsetX}px)`;
+    popup.style.top = `calc(50% + ${offsetY}px)`;
+    
+    if (target.classList.contains('stage-dot')) { popup.style.transform = `translateZ(40px)`; }
+
     target.appendChild(popup); setTimeout(() => popup.remove(), 800);
 }
 
@@ -121,15 +185,14 @@ function closeShop() { AudioEngine.click(); document.getElementById('shop-modal'
 
 function refreshShop() {
     if (player.gold >= 10) {
-        player.gold -= 10; 
-        document.getElementById('shop-gold-display').innerText = player.gold; 
-        updateUI(); AudioEngine.click(); renderShopItems();
+        player.gold -= 10; document.getElementById('shop-gold-display').innerText = player.gold; updateUI();
+        AudioEngine.click(); renderShopItems();
     } else { addLog("<b style='color:red'>Không đủ vàng làm mới!</b>"); }
 }
 
 function renderShopItems() {
     const container = document.getElementById('shop-items-container'); container.innerHTML = '';
-    const shuffled = [...SHOP_DATABASE].sort(() => 0.5 - Math.random()).slice(0, 2); 
+    const shuffled = [...SHOP_DATABASE].sort(() => 0.5 - Math.random()).slice(0, 3); 
     shuffled.forEach(item => {
         const canAfford = player.gold >= item.price;
         container.innerHTML += `
@@ -153,6 +216,8 @@ function buyShopItem(id, price) {
         player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.4)); 
         spawnPopup('player-sprite-container', Math.floor(player.maxHp * 0.4), 'heal'); 
     }
+    else if (id === 'diceLow') { player.inventory.diceLow++; }
+    else if (id === 'diceHigh') { player.inventory.diceHigh++; }
     else if (id === 'skill') { 
         document.getElementById('shop-modal').style.display = 'none';
         updateUI(); pendingRewardType = 'shop_event'; showRewardModal("🃏 MUA THẺ KỸ NĂNG 🃏"); return;
