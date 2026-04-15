@@ -5,24 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hero Vanguard: 2.5D Edition</title>
     <style>
-        :root { --bg-color: #fdf6e3; --primary: #8b5a2b; --accent: #ffcc00; --hp-color: #ff4d4d; --exp-color: #4da3ff; --text-dark: #3e2723; --cd-color: #00e676; }
+        :root { 
+            --bg-color: #fdf6e3; --primary: #8b5a2b; --accent: #ffcc00; --hp-color: #ff4d4d; --exp-color: #4da3ff; --text-dark: #3e2723; --cd-color: #00e676; 
+            
+            /* [THAY ẢNH 1]: THAY LINK ẢNH QUÂN CỜ ĐI TRÊN MAP Ở ĐÂY */
+            --map-piece-img: url('https://cdn-icons-png.flaticon.com/512/8682/8682052.png'); 
+        }
+        
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: var(--text-dark); user-select: none; }
 
         #game-container { width: 400px; height: 680px; background-color: var(--bg-color); position: relative; overflow: hidden; border: 8px solid #333; border-radius: 30px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-        /* --- HUB SCREEN --- */
+        .char-img {
+            width: 100%; height: 100%;
+            object-fit: contain; 
+            pointer-events: none; 
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.4)); 
+        }
+
         #hub-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, #87CEEB 0%, #fdf6e3 60%); z-index: 50; transition: opacity 0.5s; }
         .hub-header { display: flex; justify-content: space-between; padding: 15px 10px; background: rgba(0,0,0,0.1); }
         .hub-stat { background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .hub-center { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .formation-wrapper { position: relative; width: 160px; height: 140px; margin-bottom: 20px; }
-        .form-main { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 110px; z-index: 10; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.3)); animation: breathe 2.5s infinite; }
-        .form-supp { position: absolute; font-size: 50px; z-index: 5; opacity: 0.9; animation: breathe 3s infinite; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+        .form-main { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 110px; height: 110px; z-index: 10; animation: breathe 2.5s infinite; }
+        .form-supp { position: absolute; width: 60px; height: 60px; z-index: 5; opacity: 0.9; animation: breathe 3s infinite; display:flex; justify-content:center; align-items:center; font-size:40px;}
         .pos-1 { left: -10px; top: 40px; } .pos-2 { right: -10px; top: 40px; } .pos-3 { left: 50%; top: 0; transform: translateX(-50%); }
 
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.95) scaleX(1.02) translateY(5px); } }
-        @keyframes breatheCenter { 0%, 100% { transform: translateX(-50%) scaleY(1); } 50% { transform: translateX(-50%) scaleY(0.95) scaleX(1.02) translateY(5px); } }
 
         .game-title { font-weight: 900; font-size: 30px; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 0px #fff; margin-bottom: 30px; text-align: center; }
         #play-btn { padding: 15px 50px; font-size: 22px; font-weight: 900; background: var(--accent); color: var(--text-dark); border: 4px solid var(--primary); border-radius: 30px; cursor: pointer; box-shadow: 0 8px 0 var(--primary), 0 15px 20px rgba(0,0,0,0.3); transition: 0.1s; z-index: 20;}
@@ -33,7 +44,6 @@
         .nav-item span { font-size: 10px; font-weight: bold; margin-top: 4px; text-transform: uppercase; }
         .nav-item.active { filter: grayscale(0); color: var(--primary); transform: translateY(-5px); }
 
-        /* --- BATTLE SCREEN TOP BAR --- */
         #battle-screen { display: none; flex-direction: column; height: 100%; width: 100%; }
         .header { padding: 15px 15px 5px; background: rgba(255,255,255,0.7); display: flex; justify-content: space-between; align-items: flex-start; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .bar-label { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase;}
@@ -49,25 +59,15 @@
         .btn-toggle.active-state { background: var(--accent); color: var(--text-dark); }
         .controls-row { display: flex; gap: 5px; }
 
-        /* ========================================================= */
-        /* --- CAMERA VIEWPORT & BÀN CỜ 2.5D KHỔNG LỒ -------------- */
-        /* ========================================================= */
-
+        /* --- CAMERA VIEWPORT & BÀN CỜ KHỔNG LỒ 2.5D --- */
         #board-viewport { 
-            flex-grow: 1; 
-            width: 100%; 
-            position: relative; 
-            overflow: hidden; 
+            flex-grow: 1; width: 100%; position: relative; overflow: hidden; 
             display: flex; justify-content: center; align-items: center; 
-            perspective: 1200px; 
-            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.05) 100%);
+            perspective: 1200px; background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.05) 100%);
         }
 
         #monopoly-board-wrapper { 
-            position: absolute; 
-            width: 700px; 
-            height: 700px; 
-            transform-style: preserve-3d; 
+            position: absolute; width: 700px; height: 700px; transform-style: preserve-3d; 
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
         }
 
@@ -79,43 +79,66 @@
             transform-style: preserve-3d;
         }
         
-        .stage-dot { 
-            background: #fff; border: 3px solid #ccc; border-radius: 6px; display: flex; justify-content: center; align-items: center; position: relative; 
-            box-shadow: inset 0 -6px 0 rgba(0,0,0,0.1); font-size: 32px; transition: 0.3s; 
-            transform-style: preserve-3d;
-        }
+        .stage-dot { background: #fff; border: 3px solid #ccc; border-radius: 6px; display: flex; justify-content: center; align-items: center; position: relative; box-shadow: inset 0 -6px 0 rgba(0,0,0,0.1); font-size: 32px; transition: 0.3s; transform-style: preserve-3d; }
         .stage-dot.completed { background: #e0e0e0; filter: grayscale(0.5); }
         
         .stage-dot.active { border-color: var(--hp-color); box-shadow: 0 0 25px rgba(255, 77, 77, 0.6); background: #fff1f1; transform: scale(1.1); z-index: 15; transition: all 0.15s ease-out; }
+        
         .stage-dot.active::after { 
-            content: '♟️'; 
-            position: absolute; bottom: -5px; left: 50%; 
-            font-size: 60px; 
+            content: ''; 
+            background-image: var(--map-piece-img);
+            background-size: contain; background-repeat: no-repeat; background-position: center bottom;
+            width: 70px; height: 70px;
+            position: absolute; bottom: 0px; left: 50%; 
             transform-origin: bottom center; 
             animation: pieceJump 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) alternate infinite; 
-            text-shadow: 0 15px 10px rgba(0,0,0,0.6); z-index: 20; filter: drop-shadow(0 0 2px #fff);
+            filter: drop-shadow(0 15px 10px rgba(0,0,0,0.6)); z-index: 20;
         }
         
         @keyframes pieceJump { 
             from { transform: translateX(-50%) rotateX(-50deg) scaleY(0.9); } 
-            to { transform: translateX(-50%) rotateX(-50deg) translateY(-25px) scaleY(1.05); text-shadow: 0 35px 15px rgba(0,0,0,0.4); } 
+            to { transform: translateX(-50%) rotateX(-50deg) translateY(-25px) scaleY(1.05); filter: drop-shadow(0 35px 15px rgba(0,0,0,0.4)); } 
         }
 
         .stage-dot.active.final-step::after { animation: finalHeavyJump 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes finalHeavyJump {
             0% { transform: translateX(-50%) rotateX(-50deg) scaleY(0.8); }
-            40% { transform: translateX(-50%) rotateX(-50deg) translateY(-90px) scaleY(1.1); text-shadow: 0 80px 20px rgba(0,0,0,0.2); }
-            100% { transform: translateX(-50%) rotateX(-50deg) translateY(0) scaleY(0.95); text-shadow: 0 0 15px #ff4d4d; }
+            40% { transform: translateX(-50%) rotateX(-50deg) translateY(-90px) scaleY(1.1); filter: drop-shadow(0 80px 20px rgba(0,0,0,0.2)); }
+            100% { transform: translateX(-50%) rotateX(-50deg) translateY(0) scaleY(0.95); filter: drop-shadow(0 5px 15px #ff4d4d); }
+        }
+
+        /* --- ĐÃ THÊM: THANH MÁU TRÊN ĐẦU QUÂN CỜ (NẢY THEO BƯỚC NHẢY) --- */
+        .map-hp-bar {
+            position: absolute;
+            bottom: 85px; /* Cao hơn đỉnh đầu nhân vật */
+            left: 50%;
+            width: 50px;
+            height: 8px;
+            background: #222;
+            border: 2px solid #fff;
+            border-radius: 4px;
+            z-index: 30;
+            pointer-events: none;
+            transform-origin: bottom center;
+            animation: mapHpJump 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) alternate infinite;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
+        }
+        .map-hp-bar div { height: 100%; transition: width 0.3s ease, background-color 0.3s ease; }
+        
+        @keyframes mapHpJump { 
+            from { transform: translateX(-50%) rotateX(-50deg) translateY(0); } 
+            to { transform: translateX(-50%) rotateX(-50deg) translateY(-25px); } 
+        }
+        .stage-dot.active.final-step .map-hp-bar { animation: finalMapHpJump 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes finalMapHpJump {
+            0% { transform: translateX(-50%) rotateX(-50deg) translateY(0); }
+            40% { transform: translateX(-50%) rotateX(-50deg) translateY(-90px); }
+            100% { transform: translateX(-50%) rotateX(-50deg) translateY(0); }
         }
 
         .corner-tile { background: #ffe082; border-color: #ff8f00; font-size: 38px; }
         
-        /* --- ĐỀN THỜ MỌC RÌA NGOÀI --- */
-        .shrine-slot { 
-            position: absolute; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 35px; 
-            background: #fff8e1; border: 3px solid #8b5a2b; border-radius: 8px; box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-            transform-style: preserve-3d;
-        }
+        .shrine-slot { position: absolute; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 35px; background: #fff8e1; border: 3px solid #8b5a2b; border-radius: 8px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transform-style: preserve-3d; }
         .shrine-top { top: -60px; left: 50%; transform: translateX(-50%) rotateX(-50deg); transform-origin: bottom center; }
         .shrine-right { right: -60px; top: 50%; transform: translateY(-50%) rotateX(-50deg); transform-origin: bottom center; }
         .shrine-bottom { bottom: -60px; left: 50%; transform: translateX(-50%) rotateX(-50deg); transform-origin: bottom center; }
@@ -125,7 +148,7 @@
         .map-boss-icon { font-size: 120px; filter: drop-shadow(0 15px 15px rgba(211, 47, 47, 0.5)); animation: breathe 3s infinite; transition: 0.3s; }
         .map-boss-label { font-weight: 900; color: #d32f2f; font-size: 22px; text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff; margin-top: -15px; letter-spacing: 2px; text-align: center; }
 
-        /* --- XÚC XẮC THÔNG MINH --- */
+        /* --- OVERLAYS --- */
         #dice-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60; background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); border: 2px solid var(--accent); width: 220px; }
         .dice-pair { display: flex; gap: 15px; margin-bottom: 10px; }
         .dice-ui { font-size: 45px; animation: breathe 1s infinite; text-shadow: 2px 4px 6px rgba(0,0,0,0.2); }
@@ -135,17 +158,16 @@
         .btn-roll-cheat { flex: 1; padding: 8px 0; font-size: 11px; font-weight: bold; background: #e0e0e0; color: #555; border: 2px solid #999; border-radius: 10px; cursor: pointer; position: relative; }
         .btn-roll-cheat.active { background: #4da3ff; color: white; border-color: #0056b3; cursor: pointer; box-shadow: 0 3px 0 #0056b3; }
         .btn-roll-cheat.active:active { transform: translateY(3px); box-shadow: 0 0 0 #0056b3; }
-        .cheat-badge { position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; justify-content: center; align-items: center; border: 1px solid white; display: none; }
-
-        /* --- COMBAT VIEW --- */
+        
         #combat-view { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: var(--bg-color); z-index: 80; display: none; flex-direction: column; justify-content: space-evenly; align-items: center; }
         #monster-sprite { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .monster { font-size: 80px; filter: drop-shadow(0 8px 8px rgba(0,0,0,0.3)); transition: transform 0.2s; animation: breathe 3s infinite; }
+        .monster { width: 150px; height: 150px; display: flex; justify-content: center; align-items: flex-end; transition: transform 0.2s; animation: breathe 3s infinite; font-size:80px; }
         #player-sprite-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .battle-team-wrapper { position: relative; width: 100px; height: 100px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; transition: transform 0.2s; }
-        .battle-form-main { font-size: 55px; z-index: 10; margin-bottom: 5px; transition: transform 0.2s; }
+        .battle-team-wrapper { position: relative; width: 120px; height: 120px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; transition: transform 0.2s; }
+        .battle-form-main { width: 100px; height: 100px; z-index: 10; margin-bottom: 5px; transition: transform 0.2s; display:flex; justify-content:center; align-items:center; font-size:55px;}
         .support-entity { position: absolute; display: flex; flex-direction: column; align-items: center; z-index: 5; transition: transform 0.2s; }
-        .support-icon { font-size: 30px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+        .support-icon { width: 45px; height: 45px; display:flex; justify-content:center; align-items:center; font-size:30px;}
+        
         .entity-info { margin-top: 5px; text-align: center; background: rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 10px; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
         .entity-name { font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .atk-text { font-size: 10px; color: #ff9800; font-weight: bold; margin-bottom: 2px; }
@@ -159,17 +181,15 @@
         .popup-dmg { color: #d32f2f; } .popup-heal { color: #4caf50; } .popup-skill { color: var(--accent); font-size: 14px; white-space: nowrap; z-index: 100; text-shadow: 1px 1px 2px #000;}
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-20px) scale(1.2); } 100% { opacity: 0; transform: translateY(-50px) scale(1); } }
 
-        /* STAGE CLEAR BANNER */
         #stage-clear-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(139, 0, 0, 1) 15%, rgba(139, 0, 0, 1) 85%, rgba(0,0,0,0) 100%); color: white; text-align: center; padding: 15px 0; font-size: 28px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; z-index: 100; text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 8px rgba(0,0,0,0.5); display: none; opacity: 0; }
         #stage-clear-banner.show { display: block; animation: swipeRight 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
         @keyframes swipeRight { 0% { opacity: 0; transform: translate(-100%, -50%) scaleX(1.5); clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); } 15% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); } 85% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); } 100% { opacity: 0; transform: translate(50%, -50%) scaleX(1.5); clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } }
 
-        /* --- 5 SLOT SKILLS & LOGS --- */
         #skills-panel { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #3e2723; border-top: 2px solid #2c1e16; }
         .skill-btn { width: 50px; height: 50px; background: #5d4037; border: 2px solid #222; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5; transition: 0.2s; position: relative; cursor: not-allowed; }
         .skill-btn.ready { opacity: 1; cursor: pointer; border-color: var(--accent); box-shadow: 0 0 10px rgba(255,204,0,0.6); background: #6d4c41; }
         .skill-btn:active.ready { transform: scale(0.9); }
-        .skill-icon-ui { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(1px 1px 1px #000); }
+        .skill-icon-ui { width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-bottom: 2px; }
         .skill-cd-bar-ui { width: 80%; height: 5px; background: #333; border-radius: 3px; overflow: hidden; border: 1px solid #111; }
         .skill-cd-fill-ui { height: 100%; background: var(--cd-color); width: 0%; transition: width 0.3s; }
         
@@ -194,20 +214,15 @@
         .btn-exit { padding: 10px 20px; background: var(--hp-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-close { padding: 10px 20px; background: #aaa; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-primary { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #5d4037;}
-        .btn-primary:active { transform: translateY(4px); box-shadow: 0 0 0 #5d4037; }
         .btn-warning { padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #e65100;}
-        .btn-warning:active { transform: translateY(4px); box-shadow: 0 0 0 #e65100; }
-
-        /* SHOP ITEMS */
+        
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px; border-radius: 10px; border: 2px solid #ddd; text-align: left; }
         .shop-item-info { display: flex; align-items: center; gap: 10px; }
         .shop-item-icon { font-size: 24px; }
         .shop-item-details b { color: var(--primary); display: block; font-size: 13px; }
         .shop-item-details span { font-size: 10px; color: #666; }
         .shop-btn-buy { background: #4caf50; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #2e7d32; transition: 0.1s; }
-        .shop-btn-buy:active { transform: translateY(3px); box-shadow: 0 0 0 #2e7d32; }
-        .shop-btn-buy:disabled { background: #ccc; box-shadow: 0 3px 0 #999; cursor: not-allowed; }
-
+        
         .formation-builder { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin-bottom: 15px; padding: 15px 10px; background: #e0d8c3; border-radius: 10px; border: 2px dashed #8b5a2b; }
         .drop-zone { width: 55px; height: 55px; background: rgba(0,0,0,0.1); border: 2px dashed #999; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 11px; color: #666; font-weight: bold; position: relative;}
         .main-hero-fixed { width: 65px; height: 65px; background: #8b5a2b; border: 2px solid #3e2723; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 28px; color: white; font-weight: bold; }
@@ -232,16 +247,13 @@
                 <div class="form-supp pos-1">🥷</div>
                 <div class="form-supp pos-2">🪓</div>
                 <div class="form-supp pos-3" style="animation: breatheCenter 3s infinite;">🛡️</div>
-                <div class="form-main">🗡️</div>
+                <div class="form-main"><img src="" alt="Main" class="char-img"></div>
             </div>
             <button id="play-btn" onclick="startBattle()">BẮT ĐẦU</button>
         </div>
         <div class="hub-bottom-nav">
-            <div class="nav-item">🛒<span>Cửa hàng</span></div>
             <div class="nav-item" onclick="openTeamModal()">👥<span>Đội hình</span></div>
             <div class="nav-item active">⚔️<span>Chiến đấu</span></div>
-            <div class="nav-item">🧬<span>Thiên phú</span></div>
-            <div class="nav-item" onclick="openSettings()">⚙️<span>Cài đặt</span></div>
         </div>
     </div>
 
@@ -275,10 +287,7 @@
             </div>
             
             <div id="dice-container">
-                <div class="dice-pair">
-                    <div id="dice-result-1" class="dice-ui">🎲</div>
-                    <div id="dice-result-2" class="dice-ui" style="animation-delay: 0.2s;">🎲</div>
-                </div>
+                <div class="dice-pair"><div id="dice-result-1" class="dice-ui">🎲</div><div id="dice-result-2" class="dice-ui" style="animation-delay: 0.2s;">🎲</div></div>
                 <div class="btn-roll-group">
                     <button class="btn-roll-cheat" id="btn-dice-low" onclick="rollDice('low')">CHẬM<div class="cheat-badge" id="badge-low">0</div></button>
                     <button class="btn-roll-main" id="btn-roll" onclick="rollDice('normal')">ĐỔ XÚC XẮC</button>
@@ -300,7 +309,7 @@
                 <div id="player-sprite-container">
                     <div class="battle-team-wrapper" id="player-sprite">
                         <div id="battle-supports-container"></div>
-                        <div class="battle-form-main" id="battle-main-icon">🗡️</div>
+                        <div class="battle-form-main" id="battle-main-icon"><img src="" alt="Main" class="char-img"></div>
                     </div>
                     <div class="entity-info">
                         <div class="entity-name" style="color:var(--primary)">Tổ Đội</div>
@@ -321,25 +330,19 @@
             <div class="modal-title" style="color: #ff9800; margin-bottom:0;">🛒 THƯƠNG NHÂN 🛒</div>
             <div style="font-size: 12px; margin-bottom: 10px; color: #555;">Vàng hiện có: <b id="shop-gold-display" style="color:#ffcc00; font-size:14px;">0</b></div>
             <div id="shop-items-container" style="display:flex; flex-direction:column; gap:10px;"></div>
-            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
-                <button class="btn-warning" onclick="refreshShop()">Làm Mới (10 🪙)</button>
-                <button class="btn-close" onclick="closeShop()">Rời Đi</button>
-            </div>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;"><button class="btn-warning" onclick="refreshShop()">Làm Mới (10 🪙)</button><button class="btn-close" onclick="closeShop()">Rời Đi</button></div>
         </div>
     </div>
 
     <div id="boss-gate-modal" class="modal-overlay">
         <div class="settings-box">
             <div class="modal-title" style="color: #d32f2f;">⛩️ CỔNG BOSS ⛩️</div>
-            <p style="font-size: 14px; color: #555; margin-bottom: 20px;">Bạn có muốn khiêu chiến Trùm Cuối để qua Hồi mới không?<br><br><span style="font-size:12px; color:#ff9800">Nếu bỏ qua, Boss sẽ cộng dồn 1 tầng Cuồng Nộ (+10% Sát thương).</span></p>
-            <div style="display: flex; justify-content: center; gap: 15px;">
-                <button class="btn-warning" onclick="chooseSkipBoss()">Đi Tiếp</button>
-                <button class="btn-primary" style="background:#d32f2f;" onclick="chooseFightBoss()">Vào Đánh!</button>
-            </div>
+            <p style="font-size: 14px; color: #555; margin-bottom: 20px;">Bạn có muốn khiêu chiến Trùm Cuối?<br><span style="font-size:12px; color:#ff9800">Bỏ qua -> Boss +1 tầng Cuồng Nộ.</span></p>
+            <div style="display: flex; justify-content: center; gap: 15px;"><button class="btn-warning" onclick="chooseSkipBoss()">Đi Tiếp</button><button class="btn-primary" style="background:#d32f2f;" onclick="chooseFightBoss()">Vào Đánh!</button></div>
         </div>
     </div>
 
-    <div id="team-modal" class="modal-overlay"><div class="settings-box" style="width: 95%;"><div class="modal-title" style="margin-bottom: 5px;">SẮP XẾP ĐỘI HÌNH</div><div class="formation-builder"><div class="drop-zone" data-slot="0" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div><div class="main-hero-fixed">🗡️<br><span>MAIN</span></div><div class="drop-zone" data-slot="1" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div><div class="drop-zone" data-slot="2" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div></div><div style="font-weight: bold; font-size: 12px; margin-bottom: 5px; color: var(--primary);">DANH SÁCH SUPPORT:</div><div class="bench-container" id="bench-container" ondrop="dropToBench(event)" ondragover="allowDrop(event)"></div><div class="settings-actions" style="margin-top: 20px;"><button class="btn-close" onclick="closeTeamModal()">Xác Nhận</button></div></div></div>
+    <div id="team-modal" class="modal-overlay"><div class="settings-box" style="width: 95%;"><div class="modal-title" style="margin-bottom: 5px;">SẮP XẾP ĐỘI HÌNH</div><div class="formation-builder"><div class="drop-zone" data-slot="0" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div><div class="main-hero-fixed"><img src="" class="char-img"></div><div class="drop-zone" data-slot="1" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div><div class="drop-zone" data-slot="2" ondrop="drop(event)" ondragover="allowDrop(event)">Trống</div></div><div style="font-weight: bold; font-size: 12px; margin-bottom: 5px; color: var(--primary);">DANH SÁCH SUPPORT:</div><div class="bench-container" id="bench-container" ondrop="dropToBench(event)" ondragover="allowDrop(event)"></div><div class="settings-actions" style="margin-top: 20px;"><button class="btn-close" onclick="closeTeamModal()">Xác Nhận</button></div></div></div>
     <div id="level-modal" class="modal-overlay"><div class="modal-title" id="modal-title-text">🌟 LEVEL UP! 🌟</div><div class="choices-container" id="choices"></div></div>
     <div id="settings-modal" class="modal-overlay"><div class="settings-box"><div class="modal-title">CÀI ĐẶT</div><div class="settings-actions"><button class="btn-close" onclick="closeSettings()">Đóng</button><button class="btn-exit" onclick="confirmExit()">Thoát Game</button></div></div></div>
 

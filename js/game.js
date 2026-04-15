@@ -267,9 +267,17 @@ function spawnNextStage(tileType) {
     
     let atkValElement = document.getElementById('monster-atk-val');
     let enemyNameElement = document.getElementById('enemy-name');
+    
+    let battleMainIcon = document.getElementById('battle-main-icon');
+    if (battleMainIcon) {
+        battleMainIcon.innerHTML = GAME_IMAGES.mainCombat !== '' ? `<img src="${GAME_IMAGES.mainCombat}" class="char-img">` : '🗡️';
+    }
+
+    let monsterImageLink = ''; 
 
     if (tileType === 'chest') {
         monster.maxHp = 1; monster.hp = 1; monster.atk = 0; monster.icon = '🎁'; 
+        monsterImageLink = GAME_IMAGES.chest; 
         if (enemyNameElement) { enemyNameElement.innerText = "Rương Báu"; enemyNameElement.style.color = "#ffcc00"; }
         if (atkValElement) atkValElement.style.display = "none";
     } else {
@@ -277,9 +285,18 @@ function spawnNextStage(tileType) {
         if (atkValElement) atkValElement.style.display = "inline";
         const hpGrowthMultiplier = 1 + (player.lap * 0.30); const atkGrowthMultiplier = 1 + (player.lap * 0.15); 
         let calculatedHp = Math.floor(BASE_MONSTER.hp * hpGrowthMultiplier); let calculatedAtk = Math.floor(BASE_MONSTER.atk * atkGrowthMultiplier);
-        if (isBoss) { calculatedHp = Math.floor(calculatedHp * 2); let enrageMultiplier = 1 + (bossEnrage * 0.1); calculatedAtk = Math.floor((calculatedAtk * 1.5) * enrageMultiplier); }
+        if (isBoss) { 
+            calculatedHp = Math.floor(calculatedHp * 2); 
+            let enrageMultiplier = 1 + (bossEnrage * 0.1); 
+            calculatedAtk = Math.floor((calculatedAtk * 1.5) * enrageMultiplier); 
+            monsterImageLink = GAME_IMAGES.boss; 
+        } else {
+            monsterImageLink = GAME_IMAGES.monster; 
+        }
+        
         monster.maxHp = calculatedHp; monster.hp = monster.maxHp; monster.atk = calculatedAtk;
-        const icons = isBoss ? ['🐲', '🧌', '🤖', '👽', '🧛‍♂️'] : ['👾', '🐍', '🐺', '🦂', '🕷️', '🦇']; monster.icon = icons[Math.floor(Math.random() * icons.length)];
+        const icons = isBoss ? ['🐲', '🧌', '🤖', '👽', '🧛‍♂️'] : ['👾', '🐍', '🐺', '🦂', '🕷️', '🦇']; 
+        monster.icon = icons[Math.floor(Math.random() * icons.length)];
         
         if (enemyNameElement) {
             enemyNameElement.innerText = isBoss ? `TRÙM CUỐI (Nộ: ${bossEnrage})` : `Quái Vòng ${player.lap}`; 
@@ -287,8 +304,15 @@ function spawnNextStage(tileType) {
         }
         addLog(`Đụng độ ${isBoss ? 'BOSS ' : ''}${monster.icon}!`);
     }
+    
     let mIconUI = document.getElementById('monster-icon');
-    if (mIconUI) mIconUI.innerText = monster.icon; 
+    if (mIconUI) {
+        if (monsterImageLink !== '') {
+            mIconUI.innerHTML = `<img src="${monsterImageLink}" class="char-img">`;
+        } else {
+            mIconUI.innerText = monster.icon; 
+        }
+    }
     
     updateUI(); 
     gameLoop();
@@ -306,19 +330,34 @@ async function executeSupportSkill(index) {
     let hero = ACTIVE_TEAM[index]; let btnUI = document.getElementById(`skill-btn-${index}`);
     if(btnUI) btnUI.classList.remove('ready'); hero.cdCurrent = 0; 
     let entityEl = document.getElementById(`supp-entity-${index}`);
-    if (entityEl) { let currentTransform = entityEl.style.transform; entityEl.style.transform = `${currentTransform} translateY(-20px) scale(1.3)`; }
+    
+    let currentTransform = entityEl ? entityEl.style.transform : ''; 
+    if (entityEl) { entityEl.style.transform = `${currentTransform} translateY(-30px) rotate(15deg) scale(1.2)`; }
+    
     spawnPopup(`supp-entity-${index}`, 0, 'skill', hero.skillName);
-    let logStr = hero.triggerSkill(monster, player); addLog(`<b style="color:var(--accent)">[Support]</b> ${hero.icon} ${hero.name} ${logStr}`); updateUI();
-    setTimeout(() => { if(document.getElementById(`supp-entity-${index}`)) { let currentTransform = document.getElementById(`supp-entity-${index}`).style.transform; document.getElementById(`supp-entity-${index}`).style.transform = currentTransform.replace('translateY(-20px) scale(1.3)', ''); } }, 500);
+    let logStr = hero.triggerSkill(monster, player); 
+    addLog(`<b style="color:var(--accent)">[Support]</b> ${hero.name}: ${logStr}`); 
+    updateUI();
+    
+    setTimeout(() => { if(entityEl) { entityEl.style.transform = currentTransform; } }, 500);
 }
 
-// FIX: Chỉ tự dùng skill nếu đang bật AUTO
 async function chargeSupportMana() {
     if (player.statuses.slow > 0) return; 
     let triggered = false;
     for (let j = 0; j < ACTIVE_TEAM.length; j++) { 
         let hero = ACTIVE_TEAM[j]; 
         if (hero) {
+            // =============================================
+            // GỌI PASSIVE CỦA TỪNG SUPPORT MỖI LƯỢT
+            // Frieran: Chuông Pha Lê - xóa 1 debuff
+            // Elaine: Healing Forest - hồi 2% HP
+            // =============================================
+            if (typeof hero.passive === 'function') {
+                hero.passive(player);
+                updateUI();
+            }
+
             if (hero.cdCurrent < hero.cdMax) { 
                 hero.cdCurrent++; 
                 updateUI();
@@ -333,7 +372,6 @@ async function chargeSupportMana() {
     if (triggered) await sleep(300);
 }
 
-// BỌC THÉP HÀM NÀY, XỬ LÝ LỖI MẤT KỸ NĂNG DO CUSTOM
 async function gameLoop() {
     if (player.hp <= 0) { if(AudioEngine && typeof AudioEngine.hurt === 'function') AudioEngine.hurt(); addLog("<b style='color:red'>GAME OVER! Tổ đội đã gục ngã.</b>"); setTimeout(() => { alert("Tải lại trang để chơi lại."); location.reload(); }, 1000); return; }
     const type = monster.currentTileType || 'monster';
@@ -346,16 +384,25 @@ async function gameLoop() {
 
     addLog("Vũ khí chính bắt đầu chuỗi hành động...");
     
-    // Nếu vào trận đang auto và có skill sẵn thì dùng ngay
     if (isAutoSkill) {
         await chargeSupportMana();
         if (monster.hp <= 0) { await handleVictory(type); return; }
     }
     
+    // =============================================
+    // ĐỌC BUFF CHARIOT (TAROT) TRƯỚC CHUỖI HÀNH ĐỘNG
+    // Nếu cờ _chariotBuff đang bật -> x2 toàn bộ ATK lượt này
+    // =============================================
+    let chariotActive = player._chariotBuff;
+    if (chariotActive) {
+        player._chariotBuff = false; // Tiêu thụ buff ngay khi bắt đầu chuỗi
+        addLog(`<b style="color:#ffcc00">⚡ [The Chariot]</b> Buff x2 ATK đang kích hoạt cho chuỗi hành động này!`);
+        spawnPopup('player-sprite-container', 0, 'skill', '⚡ x2 ATK!');
+    }
+
     for (let i = 0; i < 5; i++) {
         if (monster.hp <= 0) break; 
         
-        // Cầu chì an toàn: Thoát ngay nếu đã duyệt hết mảng
         if (!player.sequence || i >= player.sequence.length) { break; } 
 
         const slot = document.getElementById(`slot-${i}`); 
@@ -371,7 +418,6 @@ async function gameLoop() {
         const actionObj = player.sequence[i]; 
         const action = ACTIONS_LIB[actionObj.id]; 
         
-        // Tránh lỗi khi mảng sequence lưu ID không tồn tại
         if (!action) {
             addLog(`<b style="color:red">Lỗi: Thẻ kỹ năng bị trống! Bỏ qua.</b>`);
             if(slot) slot.classList.remove('active'); 
@@ -382,40 +428,95 @@ async function gameLoop() {
         let dmgMultiplier = player.statuses.weaken > 0 ? 0.6 : 1; 
         let shrineMultiplier = 1 + (player.shrineBuff || 0); 
 
+        // =============================================
+        // ÁP DỤNG BUFF ELAINE (ATK STACK)
+        // _elaineAtkBuff: 0.20 / 0.40 / 0.60 tùy số stack
+        // =============================================
+        let elaineMult = 1 + (player._elaineAtkBuff || 0);
+
+        // =============================================
+        // ÁP DỤNG BUFF CHARIOT (x2 ATK nếu đang active)
+        // =============================================
+        let chariotMult = chariotActive ? 2.0 : 1.0;
+
+        let isAllAttack = (i === 0); 
+
+        // ===============================================
+        // 1. MAIN ĐÁNH TRƯỚC
+        // ===============================================
         let mainIcon = document.getElementById('battle-main-icon');
-        if (mainIcon) mainIcon.style.transform = 'translateY(-30px) rotate(15deg)'; 
+        let mainCurrentTransform = mainIcon ? mainIcon.style.transform : '';
+        if (mainIcon) mainIcon.style.transform = `${mainCurrentTransform} translateY(-30px) rotate(15deg) scale(1.2)`; 
         
         await sleep(150);
         
         if (monster.hp > 0) {
             if(AudioEngine && typeof AudioEngine.attack === 'function') AudioEngine.attack(); 
             
-            // Xử lý an toàn các chỉ số
             let baseDmg = action.dmg || 0;
             let baseHeal = action.heal || 0;
-
-            let mainDmg = type === 'chest' ? 1 : Math.floor((baseDmg * skillLevel) * dmgMultiplier * shrineMultiplier);
+            let mainDmg = type === 'chest' ? 1 : Math.floor((baseDmg * skillLevel) * dmgMultiplier * shrineMultiplier * elaineMult * chariotMult);
             
             if (mainDmg > 0) { 
                 monster.hp -= mainDmg; 
                 spawnPopup('monster-sprite', mainDmg, 'dmg'); 
-                addLog(`> Tung ${action.icon} gây <b style="color:#ff4d4d">${mainDmg}</b> sát thương!`); // BẬT LẠI LOG SÁT THƯƠNG
+                let buffNote = chariotActive ? ` <b style="color:#ffcc00">[Chariot x2]</b>` : '';
+                addLog(`> Mici tung ${action.icon} gây <b style="color:#ff4d4d">${mainDmg}</b> sát thương!${buffNote}`); 
                 if (type !== 'chest') triggerShake('monster-sprite'); 
             }
             if (baseHeal > 0) { 
                 let healAmount = Math.floor((baseHeal * skillLevel) * shrineMultiplier); 
                 player.hp = Math.min(player.maxHp, player.hp + healAmount); 
                 spawnPopup('player-sprite-container', healAmount, 'heal'); 
-                addLog(`> Dùng ${action.icon} hồi <b style="color:#4caf50">${healAmount}</b> HP!`);
+                addLog(`> Mici dùng ${action.icon} hồi <b style="color:#4caf50">${healAmount}</b> HP!`);
             }
         }
         
         updateUI(); 
-        await sleep(300); 
-        if (mainIcon) mainIcon.style.transform = 'translateY(0) rotate(0deg)';
+        if (mainIcon) mainIcon.style.transform = mainCurrentTransform;
+        await sleep(200);
+
+        // ===============================================
+        // 2. SUPPORT LAO LÊN ĐÁNH BỒI (CHỈ Ở SLOT ALL - i===0)
+        // ===============================================
+        if (isAllAttack && type !== 'chest' && monster.hp > 0) {
+            for (let j = 0; j < ACTIVE_TEAM.length; j++) {
+                let hero = ACTIVE_TEAM[j];
+                if (hero) {
+                    let suppEl = document.getElementById(`supp-entity-${j}`);
+                    let suppCurrentTransform = suppEl ? suppEl.style.transform : '';
+                    if (suppEl) suppEl.style.transform = `${suppCurrentTransform} translateY(-30px) rotate(15deg) scale(1.2)`;
+                    
+                    await sleep(150);
+                    
+                    if(AudioEngine && typeof AudioEngine.attack === 'function') AudioEngine.attack(); 
+                    let suppDmg = Math.floor((hero.baseDmg || 0) * dmgMultiplier * shrineMultiplier * chariotMult);
+                    if (suppDmg > 0) {
+                        monster.hp -= suppDmg;
+                        spawnPopup('monster-sprite', suppDmg, 'dmg');
+                        addLog(`> <b style="color:var(--accent)">[Combo]</b> ${hero.name} bồi thêm <b style="color:#ff4d4d">${suppDmg}</b> sát thương!`);
+                        triggerShake('monster-sprite');
+                    }
+
+                    // =============================================
+                    // GỌI PASSIVE TAROT: Nhãn Quan Chiến Thuật
+                    // 20% chance Đánh Dấu, giảm DEF địch 1 lượt
+                    // =============================================
+                    if (hero.id === 'tarot' && typeof hero.passiveProc === 'function' && monster.hp > 0) {
+                        hero.passiveProc(monster);
+                    }
+
+                    updateUI();
+                    
+                    if (suppEl) suppEl.style.transform = suppCurrentTransform;
+                    await sleep(200);
+                    
+                    if (monster.hp <= 0) break;
+                }
+            }
+        }
         
         await chargeSupportMana();
-
         if(slot) slot.classList.remove('active'); 
         await sleep(200); 
         if (monster.hp <= 0) break;
@@ -438,14 +539,26 @@ async function gameLoop() {
             
             let mDmgMultiplier = monster.statuses.weaken > 0 ? 0.6 : 1; 
             let finalMAtk = Math.floor((monster.atk || 0) * mDmgMultiplier);
-            player.hp -= finalMAtk; 
-            spawnPopup('player-sprite-container', finalMAtk, 'dmg'); 
-            triggerShake('player-sprite-container');
-            
-            if (Math.random() < 0.2) { 
-                applyStatus(player, 'poison', 2); 
-                addLog(`Quái vật cắn bạn trúng <b style="color:purple">Độc</b>!`); 
+
+            // =============================================
+            // XỬ LÝ GIÁP NGÔI SAO (TAROT - The Star)
+            // Nếu _starShield đang bật -> chặn toàn bộ đòn tấn công này
+            // =============================================
+            if (player._starShield) {
+                player._starShield = false;
+                addLog(`<b style="color:#4da3ff">🌟 [The Star]</b> Giáp Ngôi Sao hấp thụ hoàn toàn đòn tấn công ${finalMAtk} DMG của địch!`);
+                spawnPopup('player-sprite-container', 0, 'skill', '🛡️ BLOCKED!');
+            } else {
+                player.hp -= finalMAtk; 
+                spawnPopup('player-sprite-container', finalMAtk, 'dmg'); 
+                triggerShake('player-sprite-container');
+                
+                if (Math.random() < 0.2) { 
+                    applyStatus(player, 'poison', 2); 
+                    addLog(`Quái vật cắn bạn trúng <b style="color:purple">Độc</b>!`); 
+                }
             }
+
             updateUI(); 
             await sleep(400); 
             if (mSprite) mSprite.style.transform = 'scale(1)'; 

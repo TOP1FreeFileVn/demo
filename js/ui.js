@@ -3,26 +3,32 @@ window.currentCamScale = 0.6;
 window.currentCamShakeX = 0;
 window.currentCamShakeY = 0;
 
-function updateCamera() {
-    const boardSize = 700;
-    const tileSize = boardSize / 9;
-    let dx = 0, dy = 0;
-    let scale = window.cameraMode === 'full' ? 0.48 : window.currentCamScale;
-
-    if (window.cameraMode === 'focus') {
-        const pos = player.boardPos;
-        let row, col;
-        if (pos <= 8) { row = 1; col = pos + 1; }
-        else if (pos <= 16) { row = pos - 7; col = 9; }
-        else if (pos <= 24) { row = 9; col = 25 - pos; }
-        else { row = 33 - pos; col = 1; }
-        dx = (col - 0.5) * tileSize - (boardSize/2);
-        dy = (row - 0.5) * tileSize - (boardSize/2);
+setTimeout(() => {
+    if (GAME_IMAGES.mapPiece !== '') {
+        document.documentElement.style.setProperty('--map-piece-img', `url('${GAME_IMAGES.mapPiece}')`);
     }
+}, 100);
+
+function updateCamera() {
+    const pos = player.boardPos;
+    let row, col;
+    if (pos <= 8) { row = 1; col = pos + 1; }
+    else if (pos <= 16) { row = pos - 7; col = 9; }
+    else if (pos <= 24) { row = 9; col = 25 - pos; }
+    else { row = 33 - pos; col = 1; }
+
+    const boardSize = 700; 
+    const tileSize = boardSize / 9;
+    
+    const cx = (col - 0.5) * tileSize;
+    const cy = (row - 0.5) * tileSize;
+    
+    const dx = cx - (boardSize / 2);
+    const dy = cy - (boardSize / 2);
 
     const boardWrapper = document.getElementById('monopoly-board-wrapper');
     if (boardWrapper) {
-        boardWrapper.style.transform = `scale(${scale}) rotateX(50deg) translate(${-dx + window.currentCamShakeX}px, ${-dy + window.currentCamShakeY}px)`;
+        boardWrapper.style.transform = `scale(${window.currentCamScale}) rotateX(50deg) translate(${-dx + window.currentCamShakeX}px, ${-dy + window.currentCamShakeY}px)`;
     }
 }
 
@@ -47,8 +53,53 @@ function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev) { ev.dataTransfer.setData("heroId", ev.target.id); }
 function drop(ev) { ev.preventDefault(); let heroId = ev.dataTransfer.getData("heroId"); let element = document.getElementById(heroId); let targetZone = ev.target.closest('.drop-zone'); if (targetZone) { if (targetZone.children.length > 0 && targetZone.children[0].id !== heroId) { document.getElementById('bench-container').appendChild(targetZone.children[0]); } targetZone.innerHTML = ''; targetZone.appendChild(element); updateActiveTeam(); } }
 function dropToBench(ev) { ev.preventDefault(); let heroId = ev.dataTransfer.getData("heroId"); let element = document.getElementById(heroId); if(ev.target.id === 'bench-container' || ev.target.closest('.bench-container')) { document.getElementById('bench-container').appendChild(element); updateActiveTeam(); } }
-function updateActiveTeam() { for(let i = 0; i < 3; i++) { let zone = document.querySelector(`.drop-zone[data-slot="${i}"]`); if (zone && zone.children.length > 0 && zone.children[0].classList.contains('draggable-hero')) { ACTIVE_TEAM[i] = SUPPORT_ROSTER.find(h => h.id === zone.children[0].getAttribute('data-id')); } else { ACTIVE_TEAM[i] = null; if (zone) zone.innerHTML = 'Trống'; } } if (document.getElementById('hub-screen').style.display !== 'none') { const hubForm = document.querySelector('.formation-wrapper'); if (hubForm) { hubForm.innerHTML = '<div class="form-main">🗡️</div>'; ACTIVE_TEAM.forEach((hero, index) => { if(hero) hubForm.innerHTML += `<div class="form-supp" style="${SUPPORT_POSITIONS[index]}">${hero.icon}</div>`; }); } } }
-function openTeamModal() { const bench = document.getElementById('bench-container'); bench.innerHTML = ''; SUPPORT_ROSTER.forEach(hero => { if (!ACTIVE_TEAM.find(h => h && h.id === hero.id)) bench.innerHTML += `<div class="draggable-hero" id="drag-${hero.id}" data-id="${hero.id}" draggable="true" ondragstart="drag(event)">${hero.icon}<span>${hero.name}</span></div>`; }); for(let i = 0; i < 3; i++) { let zone = document.querySelector(`.drop-zone[data-slot="${i}"]`); zone.innerHTML = ''; if (ACTIVE_TEAM[i]) { let hero = ACTIVE_TEAM[i]; zone.innerHTML = `<div class="draggable-hero" id="drag-${hero.id}" data-id="${hero.id}" draggable="true" ondragstart="drag(event)">${hero.icon}<span>${hero.name}</span></div>`; } else zone.innerHTML = 'Trống'; } document.getElementById('team-modal').style.display = 'flex'; }
+
+function updateActiveTeam() { 
+    for(let i = 0; i < 3; i++) { 
+        let zone = document.querySelector(`.drop-zone[data-slot="${i}"]`); 
+        if (zone && zone.children.length > 0 && zone.children[0].classList.contains('draggable-hero')) { 
+            ACTIVE_TEAM[i] = SUPPORT_ROSTER.find(h => h.id === zone.children[0].getAttribute('data-id')); 
+        } else { 
+            ACTIVE_TEAM[i] = null; if (zone) zone.innerHTML = 'Trống'; 
+        } 
+    } 
+    if (document.getElementById('hub-screen').style.display !== 'none') { 
+        const hubForm = document.querySelector('.formation-wrapper'); 
+        if (hubForm) { 
+            let mainDisplay = GAME_IMAGES.mainHub !== '' ? `<img src="${GAME_IMAGES.mainHub}" class="char-img">` : '🗡️';
+            hubForm.innerHTML = `<div class="form-main">${mainDisplay}</div>`; 
+            ACTIVE_TEAM.forEach((hero, index) => { 
+                if(hero) {
+                    let displayChar = hero.img !== '' ? `<img src="${hero.img}" class="char-img">` : hero.icon;
+                    hubForm.innerHTML += `<div class="form-supp" style="${SUPPORT_POSITIONS[index]}">${displayChar}</div>`; 
+                }
+            }); 
+        } 
+    } 
+}
+
+function openTeamModal() { 
+    const bench = document.getElementById('bench-container'); bench.innerHTML = ''; 
+    SUPPORT_ROSTER.forEach(hero => { 
+        if (!ACTIVE_TEAM.find(h => h && h.id === hero.id)) {
+            let displayChar = hero.img !== '' ? `<img src="${hero.img}" class="char-img">` : hero.icon;
+            bench.innerHTML += `<div class="draggable-hero" id="drag-${hero.id}" data-id="${hero.id}" draggable="true" ondragstart="drag(event)">${displayChar}<span>${hero.name}</span></div>`; 
+        }
+    }); 
+    for(let i = 0; i < 3; i++) { 
+        let zone = document.querySelector(`.drop-zone[data-slot="${i}"]`); zone.innerHTML = ''; 
+        if (ACTIVE_TEAM[i]) { 
+            let hero = ACTIVE_TEAM[i]; 
+            let displayChar = hero.img !== '' ? `<img src="${hero.img}" class="char-img">` : hero.icon;
+            zone.innerHTML = `<div class="draggable-hero" id="drag-${hero.id}" data-id="${hero.id}" draggable="true" ondragstart="drag(event)">${displayChar}<span>${hero.name}</span></div>`; 
+        } else { zone.innerHTML = 'Trống'; }
+    } 
+    
+    let mainImgHtml = GAME_IMAGES.mainHub !== '' ? `<img src="${GAME_IMAGES.mainHub}" class="char-img">` : '🗡️<br><span style="font-size:10px">MAIN</span>';
+    document.querySelector('.main-hero-fixed').innerHTML = mainImgHtml;
+    
+    document.getElementById('team-modal').style.display = 'flex'; 
+}
 function closeTeamModal() { document.getElementById('team-modal').style.display = 'none'; }
 
 function initTeamBattleUI() {
@@ -56,8 +107,9 @@ function initTeamBattleUI() {
     supportsContainer.innerHTML = ''; skillsPanel.innerHTML = '';
     ACTIVE_TEAM.forEach((hero, index) => {
         if(hero) {
-            supportsContainer.innerHTML += `<div class="support-entity" id="supp-entity-${index}" style="${SUPPORT_POSITIONS[index]}"><div class="support-icon">${hero.icon}</div></div>`;
-            skillsPanel.innerHTML += `<div class="skill-btn" id="skill-btn-${index}" onclick="manualCastSkill(${index})"><div class="skill-icon-ui">${hero.icon}</div><div class="skill-cd-bar-ui"><div id="skill-cd-fill-${index}" class="skill-cd-fill-ui"></div></div></div>`;
+            let displayChar = hero.img !== '' ? `<img src="${hero.img}" class="char-img">` : hero.icon;
+            supportsContainer.innerHTML += `<div class="support-entity" id="supp-entity-${index}" style="${SUPPORT_POSITIONS[index]}"><div class="support-icon">${displayChar}</div></div>`;
+            skillsPanel.innerHTML += `<div class="skill-btn" id="skill-btn-${index}" onclick="manualCastSkill(${index})"><div class="skill-icon-ui">${displayChar}</div><div class="skill-cd-bar-ui"><div id="skill-cd-fill-${index}" class="skill-cd-fill-ui"></div></div></div>`;
         } else {
             skillsPanel.innerHTML += `<div class="skill-btn" style="opacity: 0.2; cursor: not-allowed;"><div class="skill-icon-ui">🔒</div></div>`;
         }
@@ -88,6 +140,15 @@ function updateUI() {
     if(btnHigh) { if(player.inventory.diceHigh > 0) { btnHigh.classList.add('active'); badgeHigh.style.display = 'flex'; badgeHigh.innerText = player.inventory.diceHigh; } else { btnHigh.classList.remove('active'); badgeHigh.style.display = 'none'; } }
 
     renderStatusIcons('player-sprite-container', player.statuses); renderStatusIcons('monster-sprite', monster.statuses);
+
+    // --- ĐÃ THÊM: UPDATE THANH MÁU TRÊN MAP LIÊN TỤC THEO MÁU THẬT ---
+    let mapHpFill = document.getElementById('map-player-hp-fill');
+    if (mapHpFill) {
+        let hpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
+        let hpColor = hpPercent > 50 ? 'var(--cd-color)' : (hpPercent > 20 ? '#ff9800' : 'var(--hp-color)');
+        mapHpFill.style.width = hpPercent + '%';
+        mapHpFill.style.backgroundColor = hpColor;
+    }
 }
 
 function renderStatusIcons(containerId, statuses) {
@@ -113,13 +174,26 @@ function renderStageMap() {
         
         dot.style.gridRow = row; dot.style.gridColumn = col;
         if (index < player.boardPos && player.lap === 1) dot.classList.add('completed');
-        if (index === player.boardPos) dot.classList.add('active');
         
         let sLevel = player.shrines[index];
         let sIcon = sLevel === 0 ? '' : (sLevel === 1 ? '⛩️' : (sLevel === 2 ? '🏯' : '🕍'));
         let shrineHtml = (!tile.isCorner && sLevel > 0) ? `<div class="shrine-slot ${posClass}">${sIcon}</div>` : '';
         
         dot.innerHTML = tile.icon + shrineHtml; 
+
+        // --- ĐÃ THÊM: GẮN THANH MÁU VÀO Ô NGƯỜI CHƠI ĐANG ĐỨNG ---
+        if (index === player.boardPos) {
+            dot.classList.add('active');
+            let hpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
+            let hpColor = hpPercent > 50 ? 'var(--cd-color)' : (hpPercent > 20 ? '#ff9800' : 'var(--hp-color)');
+            
+            dot.innerHTML += `
+                <div class="map-hp-bar" id="map-player-hp-wrap">
+                    <div id="map-player-hp-fill" style="width: ${hpPercent}%; background-color: ${hpColor};"></div>
+                </div>
+            `;
+        }
+
         container.appendChild(dot);
     });
     document.getElementById('stage-top-val').innerText = `VÒNG ${player.lap}`;
@@ -174,19 +248,19 @@ function spawnPopup(targetId, val, type, skillName = null) {
 }
 
 function openShop() {
-    AudioEngine.levelUp(); 
+    if(AudioEngine && typeof AudioEngine.levelUp === 'function') AudioEngine.levelUp(); 
     const modal = document.getElementById('shop-modal');
     document.getElementById('shop-gold-display').innerText = player.gold;
     renderShopItems();
     modal.style.display = 'flex';
 }
 
-function closeShop() { AudioEngine.click(); document.getElementById('shop-modal').style.display = 'none'; showMapPhase(); }
+function closeShop() { if(AudioEngine && typeof AudioEngine.click === 'function') AudioEngine.click(); document.getElementById('shop-modal').style.display = 'none'; showMapPhase(); }
 
 function refreshShop() {
     if (player.gold >= 10) {
         player.gold -= 10; document.getElementById('shop-gold-display').innerText = player.gold; updateUI();
-        AudioEngine.click(); renderShopItems();
+        if(AudioEngine && typeof AudioEngine.click === 'function') AudioEngine.click(); renderShopItems();
     } else { addLog("<b style='color:red'>Không đủ vàng làm mới!</b>"); }
 }
 
@@ -209,7 +283,7 @@ function renderShopItems() {
 
 function buyShopItem(id, price) {
     if (player.gold < price) return;
-    player.gold -= price; AudioEngine.click();
+    player.gold -= price; if(AudioEngine && typeof AudioEngine.click === 'function') AudioEngine.click();
     document.getElementById('shop-gold-display').innerText = player.gold; 
     
     if (id === 'heal') { 
@@ -241,7 +315,7 @@ function showRewardModal(titleText) {
     if (shuffled.length === 0) {
         const btn = document.createElement('button'); btn.className = 'choice-btn';
         btn.innerHTML = `<div class="choice-icon">💖</div><div class="choice-info"><b>Hồi Phục Tuyệt Đối</b><span>Hồi 100% HP (Full thẻ)</span></div>`;
-        btn.onclick = () => { AudioEngine.click(); player.hp = player.maxHp; executeUpgradeCallback(); }; choicesDiv.appendChild(btn); return;
+        btn.onclick = () => { if(AudioEngine && typeof AudioEngine.click === 'function') AudioEngine.click(); player.hp = player.maxHp; executeUpgradeCallback(); }; choicesDiv.appendChild(btn); return;
     }
     shuffled.forEach(key => {
         const act = ACTIONS_LIB[key]; const existing = player.sequence.find(s => s.id === key);
